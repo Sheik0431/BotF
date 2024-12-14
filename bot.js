@@ -180,7 +180,7 @@ bot.start((ctx) => {
           },
         ],
         [
-          { text: "👉 Open GeoMap", url: "https://t.me/rent_tblisi_ge/9859" },
+          { text: "👉 Open GeoMap", url: "https://t.me/rent_tbilisi_ge" },
         ],
         [
           { text: "📝 Post an Ad", web_app: { url: "https://add-bot.vercel.app" } },
