@@ -6,17 +6,15 @@ const TOKEN = "7712916176:AAF15UqOplv1hTdJVxILWoUOEefEKjGJOso";
 const bot = new Telegraf(TOKEN);
 
 // MongoDB Connection URLs
-const DATABASE_URL = "mongodb+srv://abi:abi@cluster0.dzzos.mongodb.net/Residency?retryWrites=true&w=majority&appName=Cluster0";
-const DATABASE_URL_FILTER = "mongodb+srv://abisheikabisheik102:abi@realestate.obn2d.mongodb.net/estate?retryWrites=true&w=majority&appName=RealEstate";
+const DATABASE_URL = process.env.DATABASE_URL;
+const DATABASE_URL_FILTER = process.env.DATABASE_URL_FILTER;
 
-// Connect to MongoDB
-mongoose.connect(DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+// Connect to the Primary Database
+mongoose.connect(DATABASE_URL)
   .then(() => console.log("Connected to Residency Database"))
-  .catch((error) => console.error("Error connecting to MongoDB:", error.message));
+  .catch((error) => console.error("Error connecting to Residency Database:", error.message));
 
-mongoose.connect(DATABASE_URL_FILTER, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("Connected to Estate Database"))
-  .catch((error) => console.error("Error connecting to MongoDB:", error.message));
+const filterDbConnection = mongoose.createConnection(DATABASE_URL_FILTER);
 
 // Define districts
 const DISTRICTS = [
@@ -36,6 +34,15 @@ const DISTRICTS = [
 ];
 
 // Define the Property Schema
+filterDbConnection.on("connected", () => {
+  console.log("Connected to Estate Database");
+});
+
+filterDbConnection.on("error", (error) => {
+  console.error("Error connecting to Estate Database:", error.message);
+});
+
+// Define the Property Schema (shared by both databases)
 const propertySchema = new mongoose.Schema({
   title: String,
   address: String,
@@ -53,11 +60,12 @@ const propertySchema = new mongoose.Schema({
   district: [String],
   parking: Boolean,
 });
-console.log(propertySchema)
 
-const Property = mongoose.model("Residency", propertySchema);
-console.log(Property, "yugygggygyugfftyftdtdt")
+// Models for Each Database
+const Property = mongoose.model("Residency", propertySchema); // Primary database
+const FilterProperty = filterDbConnection.model("Estate", propertySchema); // Secondary database
 
+module.exports = { Property, FilterProperty };
 // Helper Function: Fetch Properties by Filters
 const fetchPropertiesByFilters = async (filters) => {
   try {
@@ -314,3 +322,5 @@ bot.launch().then(() => console.log("Telegram Bot is running"));
 // Graceful Shutdown
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
+
+module.exports = { Property, FilterProperty };
