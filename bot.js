@@ -9,6 +9,7 @@ const bot = new Telegraf(TOKEN);
 const DATABASE_URL = process.env.DATABASE_URL;
 const DATABASE_URL_FILTER = process.env.DATABASE_URL_FILTER;
 
+
 // Connect to the Primary Database
 mongoose.connect(DATABASE_URL)
   .then(() => console.log("Connected to Residency Database"))
@@ -16,22 +17,16 @@ mongoose.connect(DATABASE_URL)
 
 const filterDbConnection = mongoose.createConnection(DATABASE_URL_FILTER);
 
-// Define districts
-const DISTRICTS = [
-  "Vera", "Mtatsminda", "Vake", "Sololaki", "Chugureti", "Saburtalo",
-  "Didube", "Gldani", "Avlabari", "Isani", "Samgori", "Dighomi",
-  "Varketili", "Ortachala", "Abanotubani", "Didi Dighomi",
-  "Dighomi Massive", "Lisi Lake", "Vashlijvari", "Afrika",
-  "Vasizubani", "Kukia", "Elia", "Okrokana", "Avchala",
-  "Temqa", "Tskhneti", "Bagebi", "Nutsubidze Plato",
-  "Vake-Saburtalo", "Vezisi", "Tkhinvali", "Kus Tba (Turtle Lake)",
-  "Lisi", "Mukhatgverdi", "Mukhattskaro", "Nutsubidze Plateau",
-  "Lisi Adjacent Area", "Digomi 1-9", "Sof. Digomi (Village Digomi)",
-  "Dighmis Chala", "Koshigora", "Didgori", "Old Tblisi",
-  "Krtsanisi", "Tsavkisi Valley", "Didube-Chughureti",
-  "Dighmis Massive (Dighmis Masivi)", "Iveri Settlement (Ivertubani)",
-  "Svaneti Quarter (Svanetis Ubani)", "Gldani-Nadzaladevi"
-];
+bot.use(session());
+
+  bot.use((ctx, next) => {
+    if (!ctx.session) {
+      ctx.session = {}; // Initialize session if undefined
+    }
+    console.log("Session:", ctx.session); // Debug session data
+    return next();
+  });
+
 
 // Define the Property Schema
 filterDbConnection.on("connected", () => {
@@ -65,44 +60,114 @@ const propertySchema = new mongoose.Schema({
 const Property = mongoose.model("Residency", propertySchema); // Primary database
 const FilterProperty = filterDbConnection.model("Estate", propertySchema); // Secondary database
 
-module.exports = { Property, FilterProperty };
+
+const userFilters = {};
+const userStates = {}; // Tracks the current step for each user
+
+
+
+
+
+
 // Helper Function: Fetch Properties by Filters
+const reverseMapping = {
+  en: {
+    cities: {
+      "Tblisi": "Tblisi",
+      "Batumi": "Batumi",
+    },
+    districts: {
+      "Vera": "Vera",
+      "Mtatsminda": "Mtatsminda",
+      "Vake": "Vake",
+      "Sololaki": "Sololaki",
+      "Sanzona": "Sanzona",
+      "Chugureti": "Chugureti",
+      "Saburtalo": "Saburtalo",
+      "Dididighomi": "Dididighomi",
+      "Old Boulevard": "Old Boulevard",
+      "New Boulevard": "New Boulevard",
+      "Gonio": "Gonio",
+      "Kobuleti": "Kobuleti",
+      "Chakvi": "Chakvi",
+    },
+  },
+  ru: {
+    cities: {
+      "Тбилиси": "Tblisi",
+      "Батуми": "Batumi",
+    },
+    districts: {
+      "Вера": "Vera",
+      "Мтацминда": "Mtatsminda",
+      "Ваке": "Vake",
+      "Сололаки": "Sololaki",
+      "Санзона": "Sanzona",
+      "Чугурети": "Chugureti",
+      "Сабуртало": "Saburtalo",
+      "Дидидигохми": "Dididighomi",
+      "Старый Бульвар": "Old Boulevard",
+      "Новый Бульвар": "New Boulevard",
+      "Гонио": "Gonio",
+      "Кобулети": "Kobuleti",
+      "Чакви": "Chakvi",
+    },
+  },
+  ka: {
+    cities: {
+      "თბილისი": "Tblisi",
+      "ბათუმი": "Batumi",
+    },
+    districts: {
+      "ვერა": "Vera",
+      "მთაწმინდა": "Mtatsminda",
+      "ვაკე": "Vake",
+      "სოლოლაკი": "Sololaki",
+      "სანზონა": "Sanzona",
+      "ჩუღურეთი": "Chugureti",
+      "საბურთალო": "Saburtalo",
+      "დიდიდიღომი": "Dididighomi",
+      "ძველი ბულვარი": "Old Boulevard",
+      "ახალი ბულვარი": "New Boulevard",
+      "გონიო": "Gonio",
+      "ქობულეთი": "Kobuleti",
+      "ჩაქვი": "Chakvi",
+    },
+  },
+};
+
+
+
 const fetchPropertiesByFilters = async (filters) => {
   try {
     const query = {};
-    
-    // Helper function to capitalize each word
-    const capitalizeWords = (str) => {
-      return str.replace(/\b\w/g, (char) => char.toUpperCase());
-    };
-    
-    // Apply price range filter
+    const lang = filters.language || "en"; // Default to 'en' if no language is provided
+    console.log("Language:", lang); // Debugging
+
+    // Ensure city is converted to English
+    if (filters.city) {
+      query.city =
+        reverseMapping.ru?.cities[filters.city] ||
+        reverseMapping.ka?.cities[filters.city] ||
+        filters.city; // Convert or fallback to original
+    }
+
+    // Ensure district is converted to English
+    if (filters.district) {
+      query.district =
+        reverseMapping.ru?.districts[filters.district] ||
+        reverseMapping.ka?.districts[filters.district] ||
+        filters.district; // Convert or fallback to original
+    }
+
+    // Handle price range
     if (filters.minPrice && filters.maxPrice) {
       query.price = { $gte: filters.minPrice, $lte: filters.maxPrice };
     }
 
-    // Capitalize and filter by city
-    if (filters.city) {
-      query.city = capitalizeWords(filters.city);
-    }
-
-    // Capitalize and filter by district
-    if (filters.district) {
-      query.district = capitalizeWords(filters.district);
-    }
-    console.log(filters)
-    console.log(query)
-
-    // Fetch properties based on query
-    const properties = await Property.find({
-      price: { $gte: filters.minPrice, $lte: filters.maxPrice }, // Filter properties where price is between minPrice and maxPrice
-      district: { $in: [query.district] }, // Example: Filter by district
-      city: query.city // Example: Filter by city
-    })
-
-    console.log(properties);
+    console.log("Query:", JSON.stringify(query)); // Debugging query
+    const properties = await Property.find(query);
     console.log("Found properties:", properties.length);
-
     return properties;
   } catch (error) {
     console.error("Error fetching properties by filters:", error.message);
@@ -110,23 +175,26 @@ const fetchPropertiesByFilters = async (filters) => {
   }
 };
 
+
+
+
+
+
 // Helper Function: Format Property Data
 const formatProperty = (property) => {
-  return (`
-    🏠 *${property.title || "Untitled"}*\n 
-    📍 Location: ${property.address || "Not provided"}\n 
-    🏙 City: ${property.city || "Not provided"}\n
-    🏙 District: ${property.district || "Not provided"}\n 
-    💰 Price: $${property.price || "N/A"}\n 
-    🛏 Rooms: ${property.rooms || "N/A"}\n 
-    🛁 Bathrooms: ${property.bathrooms || "N/A"}\n 
-    📏 Area: ${property.area || "N/A"} sqft\n 
-    🚗 Parking: ${property.parking ? "Yes" : "No"}\n 
-       `
-  );
+  return (
+    `🏠 *${property.title || "Untitled"}*\n` +
+    `📍 Location: ${property.address || "Not provided"}\n` +
+    `🏙️ City: ${property.city || "Not provided"}\n` +
+    `🏙️ District: ${property.district || "Not provided"}\n` +
+    `💰 Price: $${property.price || "N/A"}\n` +
+    `🛏️ Rooms: ${property.rooms || "N/A"}\n` +
+    `🛁 Bathrooms: ${property.bathrooms || "N/A"}\n` +
+    `📏 Area: ${property.area || "N/A"} sqft\n` +
+    `🚗 Parking: ${property.parking ? "Yes" : "No"}\n`
+   );
 };
 
-// Helper Function: Send Filtered Properties
 const sendFilteredProperties = async (ctx, properties) => {
   if (properties.length === 0) {
     await ctx.reply("No properties found matching your criteria.");
@@ -140,21 +208,21 @@ const sendFilteredProperties = async (ctx, properties) => {
         {
           caption: formatProperty(property),
           parse_mode: "Markdown",
-          reply_markup: Markup.inlineKeyboard([
-            Markup.button.url(
-              "View Details",
-              `https://real-estate-frag.vercel.app/properties/${property._id}`
+          ...Markup.inlineKeyboard([
+            Markup.button.webApp(
+              "View Details", // Button text
+              `https://add-bot.vercel.app/card/${property._id}` // Web app URL
             ),
-          ]),
+          ])
         }
       );
     } else {
       await ctx.replyWithMarkdown(
-        formatProperty(property),
+        formatProperty(property), // Function to format property details
         Markup.inlineKeyboard([
-          Markup.button.url(
-            "View Details",
-            `https://real-estate-frag.vercel.app/properties/${property._id}`
+          Markup.button.webApp(
+            "View Details", // Button text
+            `https://add-bot.vercel.app/card/${property._id}` // Web app URL
           ),
         ])
       );
@@ -162,39 +230,159 @@ const sendFilteredProperties = async (ctx, properties) => {
   }
 };
 
+
+
+// Helper Function: Send Filtered Properties
+
+
 // Start Command
+ 
+const MESSAGES = {
+  en: {
+    welcome: "🏠 Welcome to Rent In Tbilisi — your property companion!",
+    description: `No registration or email is required to interact with the app or contact the author of a listing. Simply click "Open Application," specify your search parameters, and choose a suitable option on the map or in the list.`,
+    open: "👉 Rent in Tbilisi",
+    choose_city: "Let's start filtering. Please choose a city:",
+    cities: ["Tblisi", "Batumi"],
+    choose_district:"Please choose a District in ",
+    post_ad: "📝 Post an Ad",
+    all_properties: "🏠 All Properties",
+    find_property: "✨ Find Your Dream Property",
+  },
+  ru: {
+    choose_city: "Давайте начнем фильтрацию. Пожалуйста, выберите город:",
+    cities: ["Тбилиси", "Батуми"],
+    choose_district: "Пожалуйста, выберите район в",
+
+    welcome: "🏠 Добро пожаловать в Аренду в Тбилиси — ваш помощник по недвижимости!",
+    description: `Регистрация или email не требуются для использования приложения или связи с автором объявления. Просто нажмите "Открыть приложение", укажите параметры поиска и выберите подходящий вариант на карте или в списке.`,
+    open: "👉 Аренда в Тбилиси", // Updated text
+    post_ad: "📝 Разместить объявление",
+    all_properties: "🏠 Все объекты",
+    find_property: "✨ Найти недвижимость мечты",
+  },
+  ka: {
+        choose_city: "მოდით დავიწყოთ ფილტრაცია. გთხოვთ, აირჩიოთ ქალაქი:",
+        cities: ["თბილისი", "ბათუმი"],
+        choose_district: "გთხოვთ, აირჩიოთ უბანი ქალაქში",
+
+        welcome: "🏠 კეთილი იყოს თქვენი მობრძანება თბილისის ქირავნაში — თქვენი ქონების მეგზური!",
+        description: `რეგისტრაცია ან ელ.ფოსტა არ არის საჭირო აპლიკაციასთან ურთიერთობისთვის ან განცხადების ავტორთან დასაკავშირებლად. უბრალოდ დააჭირეთ "აპლიკაციის გახსნა", მიუთითეთ თქვენი საძიებო პარამეტრები და რუკაზე ან სიაში აირჩიეთ სასურველი ვარიანტი.`,
+    open: "👉 Tbilisi-ში ქირავდება", // Updated text
+    post_ad: "📝 განცხადების გამოქვეყნება",
+    all_properties: "🏠 ყველა ქონება",
+    find_property: "✨ იპოვეთ თქვენი ოცნების ქონება",
+  },
+};
+
+
+
+
+
+// Language Selection Command   START
 bot.start((ctx) => {
-  const welcomeMessage = `
-  🏠 GEOMAP — a full-featured application available directly within Telegram, with maps and filters.
-
-  No registration or email is required to interact with the app or contact the author of a listing. Simply click "Open Application," specify your search parameters, and choose a suitable option on the map or in the list.
-  `;
-
-  return ctx.replyWithMarkdown(welcomeMessage, {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: "Open",
-            web_app: { url: "https://your-web-app-url.com" }, // Replace with your web app URL
-          },
-        ],
-        [
-          { text: "👉 Open GeoMap", url: "https://t.me/rent_tbilisi_ge" },
-        ],
-        [
-          { text: "📝 Post an Ad", web_app: { url: "https://add-bot.vercel.app" } },
-        ],
-        [
-          { text: "🏠 All Properties", callback_data: "all_properties" },
-        ],
-        [
-          { text: "✨ Find Your Dream Property", callback_data: "find_dream_property" },
-        ],
-      ],
-    },
-  });
+  ctx.reply(
+    "🌐 Please select your language:",
+    Markup.inlineKeyboard([
+      [{ text: "English", callback_data: "lang_en" }],
+      [{ text: "Русский", callback_data: "lang_ru" }],
+      [{ text: "ქართული", callback_data: "lang_ka" }],
+    ])
+  );
 });
+
+
+
+
+// Handle Language Selection   CHOOSE LANGUAGE
+bot.action(/lang_(.+)/, (ctx) => {
+  const selectedLang = ctx.match[1]; // Extract language code (en, ru, ka)
+  ctx.session.language = selectedLang; // Save selected language in session
+  console.log(`Language set to: ${selectedLang}`); // Debug log
+
+  const messages = MESSAGES[selectedLang]; // Fetch messages in the selected language
+
+  ctx.replyWithMarkdown(
+    `*${messages.welcome}*\n\n${messages.description}`,
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "Open",
+              web_app: { url: "https://add-bot.vercel.app" }, // Replace with your web app URL
+            },
+          ],
+          [
+            {
+              text: messages.open,
+              url: "https://t.me/rent_tbilisi_ge", // Example link
+            },
+          ],
+          [{ text: messages.post_ad, web_app: { url: "https://add-bot.vercel.app" } }],
+          [{ text: messages.all_properties, callback_data: "all_properties" }],
+          [{ text: messages.find_property, callback_data: "find_dream_property" }],
+        ],
+      },
+    }
+  );
+});
+
+
+ 
+// Helper Function to Initialize User Filters
+const initializeUserFilters = (ctx) => {
+  if (!userFilters[ctx.from.id]) {
+    userFilters[ctx.from.id] = {}; // Initialize user filters for the user
+  }
+};
+
+ 
+ 
+
+const DISTRICTS = {
+  en: {
+    Tblisi: ["Vera", "Mtatsminda", "Vake", "Sololaki", "Sanzona", "Chugureti", "Saburtalo", "Dididighomi"],
+    Batumi: ["Old Boulevard", "New Boulevard", "Gonio", "Kobuleti", "Chakvi"],
+  },
+  ru: {
+    Tblisi: ["Вера", "Мтацминда", "Ваке", "Сололаки", "Санзона", "Чугурети", "Сабуртало", "Дидидигохми"],
+    Batumi: ["Старый Бульвар", "Новый Бульвар", "Гонио", "Кобулети", "Чакви"],
+  },
+  ka: {
+    Tblisi: ["ვერა", "მთაწმინდა", "ვაკე", "სოლოლაკი", "სანზონა", "ჩუღურეთი", "საბურთალო", "დიდიდიღომი"],
+    Batumi: ["ძველი ბულვარი", "ახალი ბულვარი", "გონიო", "ქობულეთი", "ჩაქვი"],
+  },
+};
+
+// Handle "find_dream_property" callback
+bot.action("find_dream_property", (ctx) => {
+  const lang = ctx.session?.language || "en"; // Default to English if not set
+  const messages = MESSAGES[lang]; // Fetch messages for the selected language
+
+  initializeUserFilters(ctx); // Ensure userFilters is initialized
+  userStates[ctx.from.id] = "choose_city"; // Set the state to choose city
+
+  ctx.answerCbQuery();
+  ctx.reply(
+    messages.choose_city, // Language-specific message
+    Markup.inlineKeyboard(
+      Object.keys(DISTRICTS[lang]).map((cityKey) => [
+        Markup.button.callback(messages.cities[Object.keys(DISTRICTS[lang]).indexOf(cityKey)], `city_${cityKey}`)
+      ])
+    )
+  );
+});
+
+
+ 
+
+
+
+
+
+
+
 
 // Handle All Properties Command
 bot.action("all_properties", async (ctx) => {
@@ -209,112 +397,180 @@ bot.action("all_properties", async (ctx) => {
   }
 });
 
-// Handle Find Dream Property Command
-bot.action("find_dream_property", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply(
-    "Hello! 😊 GeoMap is your trusted real estate partner, helping you find dream homes and properties in Georgia with ease. 🏡✨"
-  );
-  setTimeout(async () => {
-    await ctx.reply("Choose your next step:", {
-      reply_markup: {
-        inline_keyboard: [[{ text: "Choose Property 🏠", callback_data: "choose_property" }]],
-      },
-    });
-  }, 3000);
-});
-const datas = {}
 
-// Handle Choose Property Command
-bot.action("choose_property", async (ctx) => {
-  await ctx.answerCbQuery();
-  await ctx.reply("Select a city:", {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: "Tblisi", callback_data: "city_tblisi" },
-          { text: "Batumi", callback_data: "city_batumi" },
-        ],
-        [{ text: "⬅ Back", callback_data: "find_dream_property" }], // Back button
 
-      ],
-    },
-  });
-});
 
-// Handle City Selection
-bot.action(/city_(.+)/, async (ctx) => {
-  const city = ctx.match[1];
-  ctx.session = ctx.session || {}; // Ensure session exists
-  ctx.session.city = city;
-  datas.city = city;
-  await ctx.reply(`City selected: ${city}. Select a district:`, {
-    reply_markup: {
-      inline_keyboard: [
-        ...DISTRICTS.map((district) => [
-          {
-            text: district,
-            callback_data: `district_${district.toLowerCase().replace(/[^a-z0-9]/g, '_')},`
-          },
+
+
+
+ 
+
+
+
+Object.keys(DISTRICTS.en).forEach((cityKey) => {
+  bot.action(`city_${cityKey}`, async (ctx) => {
+    const lang = ctx.session?.language || "en"; // Default to English
+    const messages = MESSAGES[lang];
+    const districts = DISTRICTS[lang][cityKey]; // Get districts for selected language and city
+
+    initializeUserFilters(ctx); // Ensure userFilters is initialized
+    userFilters[ctx.from.id].city = cityKey; // Store selected city
+    userStates[ctx.from.id] = "choose_district"; // Move to next step
+
+    await ctx.deleteMessage(); // Delete the current message
+
+    ctx.reply(
+      `${messages.choose_district} ${messages.cities[Object.keys(DISTRICTS[lang]).indexOf(cityKey)]}.`,
+      Markup.inlineKeyboard([
+        ...districts.map((district, index) => [
+          Markup.button.callback(district, `district_${cityKey}_${index}`),
         ]),
-        [{ text: "⬅ Back", callback_data: "choose_property" }], // Back button
-      ],
-    },
+        [Markup.button.callback(messages.back_to_city || "⬅️ Back", "back_to_city")], // Back button
+      ])
+    );
   });
 });
 
-// Handle District Selection
-bot.action(/district_(.+)/, async (ctx) => {
-  const district = ctx.match[1];
-  ctx.session = ctx.session || {}; // Ensure session exists
-  ctx.session.district = district;
-  datas.district = district.slice(0 , district.length-1);
-  await ctx.reply("Select a price range:", {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: "$100 - $200", callback_data: "price_100_200" },
-          { text: "$200 - $300", callback_data: "price_200_300" },
-        ],
-        [
-          { text: "$300 - $500", callback_data: "price_300_500" },
-          { text: "$500 - $1000", callback_data: "price_500_1000" },
-        ],
-        [{ text: "Above $1000", callback_data: "price_above_1000" }],
-        [{ text: "⬅ Back", callback_data: `city_${ctx.session.city}` }], // Back button
-      ],
-    },
+Object.keys(DISTRICTS.en).forEach((cityKey) => {
+  DISTRICTS.en[cityKey].forEach((_, index) => {
+    bot.action(`district_${cityKey}_${index}`, async (ctx) => {
+      const lang = ctx.session?.language || "en"; // Default to English
+      const messages = MESSAGES[lang];
+      const districts = DISTRICTS[lang][cityKey]; // Get language-specific districts
+      const selectedDistrict = districts[index]; // Get the correct district by index
+
+      initializeUserFilters(ctx);
+      userFilters[ctx.from.id].district = selectedDistrict; // Store selected district
+      userStates[ctx.from.id] = "choose_price";
+
+      await ctx.deleteMessage(); // Delete the current message
+
+      ctx.reply(
+        `${messages.choose_price || "Please choose a price range:"} ${selectedDistrict}.`,
+        Markup.inlineKeyboard([
+          [Markup.button.callback("$100 - $500", "price_100_500")],
+          [Markup.button.callback("$500 - $1000", "price_500_1000")],
+          [Markup.button.callback("$1000 - $2000", "price_1000_2000")],
+          [Markup.button.callback(messages.above_price_2000 || "Above $2000", "price_above_2000")],
+          [Markup.button.callback(messages.back_to_district || "⬅️ Back", `back_to_district_${cityKey}`)], // Back to districts
+        ])
+      );
+    });
   });
+});
+
+bot.action("back_to_city", async (ctx) => {
+  const lang = ctx.session?.language || "en";
+  const messages = MESSAGES[lang];
+
+  await ctx.deleteMessage(); // Delete the current message
+
+  ctx.reply(
+    messages.choose_city || "Please choose a city:",
+    Markup.inlineKeyboard(
+      Object.keys(DISTRICTS[lang]).map((cityKey) => [
+        Markup.button.callback(messages.cities[Object.keys(DISTRICTS[lang]).indexOf(cityKey)], `city_${cityKey}`),
+      ])
+    )
+  );
+});
+
+Object.keys(DISTRICTS.en).forEach((cityKey) => {
+  bot.action(`back_to_district_${cityKey}`, async (ctx) => {
+    const lang = ctx.session?.language || "en"; // Default to English
+    const messages = MESSAGES[lang];
+    const districts = DISTRICTS[lang][cityKey]; // Retrieve districts for the selected city
+
+    await ctx.deleteMessage(); // Delete the current message
+
+    ctx.reply(
+      `${messages.choose_district || "Please choose a district:"}`,
+      Markup.inlineKeyboard([
+        ...districts.map((district, index) => [
+          Markup.button.callback(district, `district_${cityKey}_${index}`),
+        ]),
+        [Markup.button.callback(messages.back_to_city || "⬅️ Back", "back_to_city")], // Back to city
+      ])
+    );
+  });
+});
+
+  
+
+
+
+
+
+
+bot.action("price_100_500", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 100;
+  userFilters[ctx.from.id].maxPrice = 500;
+  userStates[ctx.from.id] = "done"; // Filtering complete
+  await applyFilters(ctx);
+});
+
+bot.action("price_500_1000", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 500;
+  userFilters[ctx.from.id].maxPrice = 1000;
+  userStates[ctx.from.id] = "done"; // Filtering complete
+  await applyFilters(ctx);
+});
+
+
+bot.action("back_to_city", (ctx) => {
+  const lang = ctx.session?.language || "en"; // Get current language, default to 'en'
+  const messages = MESSAGES[lang]; // Get messages in selected language
+
+  initializeUserFilters(ctx); // Ensure userFilters is initialized
+  delete userFilters[ctx.from.id].city; // Remove city filter
+  userStates[ctx.from.id] = "choose_city";
+
+  ctx.answerCbQuery();
+  ctx.reply(
+    messages.choose_city, // Correct language-specific "choose city" message
+    Markup.inlineKeyboard(
+      Object.keys(DISTRICTS[lang]).map((cityKey) => [
+        Markup.button.callback(messages.cities[Object.keys(DISTRICTS[lang]).indexOf(cityKey)], `city_${cityKey}`)
+      ])
+    )
+  );
+});
+
+
+bot.action("back_to_district", (ctx) => {
+  initializeUserFilters(ctx); // Ensure userFilters is initialized
+  delete userFilters[ctx.from.id].district; // Remove district filter
+  userStates[ctx.from.id] = "choose_district";
+
+  const city = userFilters[ctx.from.id].city; // Use the previously selected city
+  ctx.answerCbQuery();
+  ctx.reply("Please choose a district:", Markup.inlineKeyboard([
+    ...DISTRICTS[city].map(district => [Markup.button.callback(district, `district_${district}`)]),
+    [Markup.button.callback("⬅️ Back", "back_to_city")],
+  ]));
 });
 
 // Handle Price Selection
-bot.action(/price_(.+)/, async (ctx) => {
-  const priceRange = ctx.match[1];
-  const [minPrice, maxPrice] =
-    priceRange === "above_1000" ? [1000, null] : priceRange.split("_").map(Number);
+bot.action("price_100_500", async (ctx) => {
+  initializeUserFilters(ctx); // Ensure userFilters is initialized
+  userFilters[ctx.from.id].minPrice = 100;
+  userFilters[ctx.from.id].maxPrice = 500;
+  userStates[ctx.from.id] = "done"; // Filtering complete
 
-  ctx.session = ctx.session || {}; // Ensure session exists
-  ctx.session.minPrice = minPrice;
-  ctx.session.maxPrice = maxPrice;
-  datas.minPrice = minPrice;
-  datas.maxPrice = maxPrice;
-
-  const filters = {
-    city: ctx.session.city,
-    district: ctx.session.district,
-    minPrice,
-    maxPrice,
-  };
-
-  try {
-    console.log(datas)
-    const properties = await fetchPropertiesByFilters(datas);
-    await sendFilteredProperties(ctx, properties);
-  } catch (error) {
-    console.error("Error fetching filtered properties:", error.message);
-    await ctx.reply("An error occurred while fetching properties. Please try again later.");
-  }
+  await applyFilters(ctx);
 });
+
+// Apply Filters
+const applyFilters = async (ctx) => {
+  const filters = userFilters[ctx.from.id];
+  ctx.reply("Applying filters... Please wait.");
+  const properties = await fetchPropertiesByFilters(filters);
+  await sendFilteredProperties(ctx, properties);
+};
+
+
+
+
 
 // Launch the bot
 bot.launch().then(() => console.log("Telegram Bot is running"));
