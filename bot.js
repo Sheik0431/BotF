@@ -215,6 +215,7 @@ const MESSAGES = {
     choose_city: "Let's start filtering. Please choose a city:",
     cities: ["Tblisi", "Batumi"],
     choose_district: "Please choose a District in ",
+    all_properties: "🏠 All Properties",
     post_ad: "📝 Post an Ad",
     find_property: "✨ Find Your Dream Property",
   },
@@ -228,6 +229,7 @@ const MESSAGES = {
     description: `Регистрация или email не требуются для использования приложения или связи с автором объявления. Просто нажмите "Открыть приложение", укажите параметры поиска и выберите подходящий вариант на карте или в списке.`,
     open: "👉 Аренда в Тбилиси", // Updated text
     post_ad: "📝 Разместить объявление",
+    all_properties: "🏠 Все объекты",
     find_property: "✨ Найти недвижимость мечты",
   },
   ka: {
@@ -240,6 +242,7 @@ const MESSAGES = {
     description: `რეგისტრაცია ან ელ.ფოსტა არ არის საჭირო აპლიკაციასთან ურთიერთობისთვის ან განცხადების ავტორთან დასაკავშირებლად. უბრალოდ დააჭირეთ "აპლიკაციის გახსნა", მიუთითეთ თქვენი საძიებო პარამეტრები და რუკაზე ან სიაში აირჩიეთ სასურველი ვარიანტი.`,
     open: "👉 Tbilisi-ში ქირავდება", // Updated text
     post_ad: "📝 განცხადების გამოქვეყნება",
+    all_properties: "🏠 ყველა ქონება",
     find_property: "✨ იპოვეთ თქვენი ოცნების ქონება",
   },
 };
@@ -369,7 +372,19 @@ bot.action("find_dream_property", (ctx) => {
 });
 
 // Handle All Properties Command
-
+bot.action("all_properties", async (ctx) => {
+  await ctx.answerCbQuery();
+  try {
+    const properties = await Property.find();
+    console.log("Found properties:", properties.length);
+    await sendFilteredProperties(ctx, properties);
+  } catch (error) {
+    console.error("Error all properties:", error.message);
+    await ctx.reply(
+      "An error occurred while fetching properties. Please try again later."
+    );
+  }
+});
 
 Object.keys(DISTRICTS.en).forEach((cityKey) => {
   bot.action(`city_${cityKey}`, async (ctx) => {
