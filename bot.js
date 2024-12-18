@@ -8,22 +8,53 @@ const bot = new Telegraf(TOKEN);
 DATABASE_URL = process.env.DATABASE_URL;
 
 // Connect to MongoDB
-mongoose
-  .connect(DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("Connected to Residency Database"))
-  .catch((error) =>
-    console.error("Error connecting to MongoDB:", error.message)
-  );
+  .catch((error) => console.error("Error connecting to MongoDB:", error.message));
 
-bot.use(session());
+  bot.use(session());
 
-bot.use((ctx, next) => {
-  if (!ctx.session) {
-    ctx.session = {}; // Initialize session if undefined
-  }
-  console.log("Session:", ctx.session); // Debug session data
-  return next();
-});
+  bot.use((ctx, next) => {
+    if (!ctx.session) {
+      ctx.session = {}; // Initialize session if undefined
+    }
+    console.log("Session:", ctx.session); // Debug session data
+    return next();
+  });
+ 
+
+  bot.use((ctx, next) => {
+    if (!ctx.session) ctx.session = {};
+    if (!ctx.session.webAppURL) {
+      const user = ctx.from;
+      const username = user.username || "No username";
+      const userId = user.id;
+      const firstName = user.first_name || "No first name";
+      const lastName = user.last_name || "No last name";
+  
+      // Generate the WebApp URL dynamically
+      ctx.session.webAppURL = `https://nothing-client.vercel.app/?username=${encodeURIComponent(
+        username
+      )}&userId=${userId}&firstName=${encodeURIComponent(
+        firstName
+      )}&lastName=${encodeURIComponent(lastName)}`;
+    }
+    return next();
+  });
+  
+  // Global WebApp URL Function
+  let globalWebAppURL = "";
+  const generateGlobalWebAppURL = (user) => {
+    const username = user.username || "No username";
+    const userId = user.id;
+    const firstName = user.first_name || "No first name";
+    const lastName = user.last_name || "No last name";
+    return `https://nothing-client.vercel.app/?username=${encodeURIComponent(
+      username
+    )}&userId=${userId}&firstName=${encodeURIComponent(
+      firstName
+    )}&lastName=${encodeURIComponent(lastName)}`;
+  };
 
 // Define the Property Schema
 const propertySchema = new mongoose.Schema({
@@ -46,75 +77,83 @@ const propertySchema = new mongoose.Schema({
 
 const Property = mongoose.model("Residency", propertySchema);
 
+
 const userFilters = {};
 const userStates = {}; // Tracks the current step for each user
+
+
+
+
+
 
 // Helper Function: Fetch Properties by Filters
 const reverseMapping = {
   en: {
     cities: {
-      Tblisi: "Tblisi",
-      Batumi: "Batumi",
+      "Tblisi": "Tblisi",
+      "Batumi": "Batumi",
     },
     districts: {
-      Vera: "Vera",
-      Mtatsminda: "Mtatsminda",
-      Vake: "Vake",
-      Sololaki: "Sololaki",
-      Sanzona: "Sanzona",
-      Chugureti: "Chugureti",
-      Saburtalo: "Saburtalo",
-      Dididighomi: "Dididighomi",
+      "Vera": "Vera",
+      "Mtatsminda": "Mtatsminda",
+      "Vake": "Vake",
+      "Sololaki": "Sololaki",
+      "Sanzona": "Sanzona",
+      "Chugureti": "Chugureti",
+      "Saburtalo": "Saburtalo",
+      "Dididighomi": "Dididighomi",
       "Old Boulevard": "Old Boulevard",
       "New Boulevard": "New Boulevard",
-      Gonio: "Gonio",
-      Kobuleti: "Kobuleti",
-      Chakvi: "Chakvi",
+      "Gonio": "Gonio",
+      "Kobuleti": "Kobuleti",
+      "Chakvi": "Chakvi",
     },
   },
   ru: {
     cities: {
-      Тбилиси: "Tblisi",
-      Батуми: "Batumi",
+      "Тбилиси": "Tblisi",
+      "Батуми": "Batumi",
     },
     districts: {
-      Вера: "Vera",
-      Мтацминда: "Mtatsminda",
-      Ваке: "Vake",
-      Сололаки: "Sololaki",
-      Санзона: "Sanzona",
-      Чугурети: "Chugureti",
-      Сабуртало: "Saburtalo",
-      Дидидигохми: "Dididighomi",
+      "Вера": "Vera",
+      "Мтацминда": "Mtatsminda",
+      "Ваке": "Vake",
+      "Сололаки": "Sololaki",
+      "Санзона": "Sanzona",
+      "Чугурети": "Chugureti",
+      "Сабуртало": "Saburtalo",
+      "Дидидигохми": "Dididighomi",
       "Старый Бульвар": "Old Boulevard",
       "Новый Бульвар": "New Boulevard",
-      Гонио: "Gonio",
-      Кобулети: "Kobuleti",
-      Чакви: "Chakvi",
+      "Гонио": "Gonio",
+      "Кобулети": "Kobuleti",
+      "Чакви": "Chakvi",
     },
   },
   ka: {
     cities: {
-      თბილისი: "Tblisi",
-      ბათუმი: "Batumi",
+      "თბილისი": "Tblisi",
+      "ბათუმი": "Batumi",
     },
     districts: {
-      ვერა: "Vera",
-      მთაწმინდა: "Mtatsminda",
-      ვაკე: "Vake",
-      სოლოლაკი: "Sololaki",
-      სანზონა: "Sanzona",
-      ჩუღურეთი: "Chugureti",
-      საბურთალო: "Saburtalo",
-      დიდიდიღომი: "Dididighomi",
+      "ვერა": "Vera",
+      "მთაწმინდა": "Mtatsminda",
+      "ვაკე": "Vake",
+      "სოლოლაკი": "Sololaki",
+      "სანზონა": "Sanzona",
+      "ჩუღურეთი": "Chugureti",
+      "საბურთალო": "Saburtalo",
+      "დიდიდიღომი": "Dididighomi",
       "ძველი ბულვარი": "Old Boulevard",
       "ახალი ბულვარი": "New Boulevard",
-      გონიო: "Gonio",
-      ქობულეთი: "Kobuleti",
-      ჩაქვი: "Chakvi",
+      "გონიო": "Gonio",
+      "ქობულეთი": "Kobuleti",
+      "ჩაქვი": "Chakvi",
     },
   },
 };
+
+
 
 const fetchPropertiesByFilters = async (filters) => {
   try {
@@ -153,6 +192,11 @@ const fetchPropertiesByFilters = async (filters) => {
   }
 };
 
+
+
+
+
+
 // Helper Function: Format Property Data
 const formatProperty = (property) => {
   return (
@@ -165,7 +209,7 @@ const formatProperty = (property) => {
     `🛁 Bathrooms: ${property.bathrooms || "N/A"}\n` +
     `📏 Area: ${property.area || "N/A"} sqft\n` +
     `🚗 Parking: ${property.parking ? "Yes" : "No"}\n`
-  );
+   );
 };
 
 const sendFilteredProperties = async (ctx, properties) => {
@@ -184,9 +228,9 @@ const sendFilteredProperties = async (ctx, properties) => {
           ...Markup.inlineKeyboard([
             Markup.button.webApp(
               "View Details", // Button text
-              `https://add-bot.vercel.app/card/${property._id}` // Web app URL
+              `https://nothing-client.vercel.app/card/${property._id}` // Web app URL
             ),
-          ]),
+          ])
         }
       );
     } else {
@@ -195,18 +239,14 @@ const sendFilteredProperties = async (ctx, properties) => {
         Markup.inlineKeyboard([
           Markup.button.webApp(
             "View Details", // Button text
-            `https://add-bot.vercel.app/card/${property._id}` // Web app URL
+            `https://nothing-client.vercel.app/card/${property._id}` // Web app URL
           ),
         ])
       );
     }
   }
 };
-
-// Helper Function: Send Filtered Properties
-
-// Start Command
-
+ 
 const MESSAGES = {
   en: {
     welcome: "🏠 Welcome to Rent In Tbilisi — your property companion!",
@@ -214,41 +254,39 @@ const MESSAGES = {
     open: "👉 Rent in Tbilisi",
     choose_city: "Let's start filtering. Please choose a city:",
     cities: ["Tblisi", "Batumi"],
-    choose_district: "Please choose a District in ",
-    all_properties: "🏠 All Properties",
+    choose_district:"Please choose a District in ",
     post_ad: "📝 Post an Ad",
-    find_property: "✨ Find Your Dream Property",
+     find_property: "✨ Find Your Dream Property",
   },
   ru: {
     choose_city: "Давайте начнем фильтрацию. Пожалуйста, выберите город:",
     cities: ["Тбилиси", "Батуми"],
     choose_district: "Пожалуйста, выберите район в",
 
-    welcome:
-      "🏠 Добро пожаловать в Аренду в Тбилиси — ваш помощник по недвижимости!",
+    welcome: "🏠 Добро пожаловать в Аренду в Тбилиси — ваш помощник по недвижимости!",
     description: `Регистрация или email не требуются для использования приложения или связи с автором объявления. Просто нажмите "Открыть приложение", укажите параметры поиска и выберите подходящий вариант на карте или в списке.`,
     open: "👉 Аренда в Тбилиси", // Updated text
     post_ad: "📝 Разместить объявление",
-    all_properties: "🏠 Все объекты",
-    find_property: "✨ Найти недвижимость мечты",
+     find_property: "✨ Найти недвижимость мечты",
   },
   ka: {
-    choose_city: "მოდით დავიწყოთ ფილტრაცია. გთხოვთ, აირჩიოთ ქალაქი:",
-    cities: ["თბილისი", "ბათუმი"],
-    choose_district: "გთხოვთ, აირჩიოთ უბანი ქალაქში",
+        choose_city: "მოდით დავიწყოთ ფილტრაცია. გთხოვთ, აირჩიოთ ქალაქი:",
+        cities: ["თბილისი", "ბათუმი"],
+        choose_district: "გთხოვთ, აირჩიოთ უბანი ქალაქში",
 
-    welcome:
-      "🏠 კეთილი იყოს თქვენი მობრძანება თბილისის ქირავნაში — თქვენი ქონების მეგზური!",
-    description: `რეგისტრაცია ან ელ.ფოსტა არ არის საჭირო აპლიკაციასთან ურთიერთობისთვის ან განცხადების ავტორთან დასაკავშირებლად. უბრალოდ დააჭირეთ "აპლიკაციის გახსნა", მიუთითეთ თქვენი საძიებო პარამეტრები და რუკაზე ან სიაში აირჩიეთ სასურველი ვარიანტი.`,
+        welcome: "🏠 კეთილი იყოს თქვენი მობრძანება თბილისის ქირავნაში — თქვენი ქონების მეგზური!",
+        description: `რეგისტრაცია ან ელ.ფოსტა არ არის საჭირო აპლიკაციასთან ურთიერთობისთვის ან განცხადების ავტორთან დასაკავშირებლად. უბრალოდ დააჭირეთ "აპლიკაციის გახსნა", მიუთითეთ თქვენი საძიებო პარამეტრები და რუკაზე ან სიაში აირჩიეთ სასურველი ვარიანტი.`,
     open: "👉 Tbilisi-ში ქირავდება", // Updated text
     post_ad: "📝 განცხადების გამოქვეყნება",
-    all_properties: "🏠 ყველა ქონება",
-    find_property: "✨ იპოვეთ თქვენი ოცნების ქონება",
+     find_property: "✨ იპოვეთ თქვენი ოცნების ქონება",
   },
 };
 
-// Language Selection Command   START
-bot.start((ctx) => {
+  bot.start((ctx) => {
+  const user = ctx.from;
+  globalWebAppURL = generateGlobalWebAppURL(user);
+  console.log("User Info:", user);
+  console.log("Global WebApp URL:", globalWebAppURL);
   ctx.reply(
     "🌐 Please select your language:",
     Markup.inlineKeyboard([
@@ -259,48 +297,36 @@ bot.start((ctx) => {
   );
 });
 
-// Handle Language Selection   CHOOSE LANGUAGE
 bot.action(/lang_(.+)/, (ctx) => {
   const selectedLang = ctx.match[1]; // Extract language code (en, ru, ka)
   ctx.session.language = selectedLang; // Save selected language in session
   console.log(`Language set to: ${selectedLang}`); // Debug log
-
   const messages = MESSAGES[selectedLang]; // Fetch messages in the selected language
-
-  ctx.replyWithMarkdown(`*${messages.welcome}*\n\n${messages.description}`, {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: "Open",
-            web_app: { url: "https://add-bot.vercel.app" }, // Replace with your web app URL
-          },
+  ctx.replyWithMarkdown(
+    `*${messages.welcome}*\n\n${messages.description}`,
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "Open",
+             url: globalWebAppURL,  
+            },
+          ],
+          [
+            {
+              text: messages.open,
+              url: "https://t.me/rent_tbilisi_ge",  
+            },
+          ],
+          [{ text: messages.post_ad, web_app: { url: "https://nothing-client.vercel.app/ads" } }],
+           [{ text: messages.find_property, callback_data: "find_dream_property" }],
         ],
-        [
-          {
-            text: messages.open,
-            url: "https://t.me/rent_tbilisi_ge", // Example link
-          },
-        ],
-        [
-          {
-            text: messages.post_ad,
-            web_app: { url: "https://add-bot.vercel.app" },
-          },
-        ],
-        [{ text: messages.all_properties, callback_data: "all_properties" }],
-        [
-          {
-            text: messages.find_property,
-            callback_data: "find_dream_property",
-          },
-        ],
-      ],
-    },
-  });
+      },
+    }
+  );
 });
 
-// Helper Function to Initialize User Filters
 const initializeUserFilters = (ctx) => {
   if (!userFilters[ctx.from.id]) {
     userFilters[ctx.from.id] = {}; // Initialize user filters for the user
@@ -309,47 +335,19 @@ const initializeUserFilters = (ctx) => {
 
 const DISTRICTS = {
   en: {
-    Tblisi: [
-      "Vera",
-      "Mtatsminda",
-      "Vake",
-      "Sololaki",
-      "Sanzona",
-      "Chugureti",
-      "Saburtalo",
-      "Dididighomi",
-    ],
+    Tblisi: ["Vera", "Mtatsminda", "Vake", "Sololaki", "Sanzona", "Chugureti", "Saburtalo", "Dididighomi"],
     Batumi: ["Old Boulevard", "New Boulevard", "Gonio", "Kobuleti", "Chakvi"],
   },
   ru: {
-    Tblisi: [
-      "Вера",
-      "Мтацминда",
-      "Ваке",
-      "Сололаки",
-      "Санзона",
-      "Чугурети",
-      "Сабуртало",
-      "Дидидигохми",
-    ],
+    Tblisi: ["Вера", "Мтацминда", "Ваке", "Сололаки", "Санзона", "Чугурети", "Сабуртало", "Дидидигохми"],
     Batumi: ["Старый Бульвар", "Новый Бульвар", "Гонио", "Кобулети", "Чакви"],
   },
   ka: {
-    Tblisi: [
-      "ვერა",
-      "მთაწმინდა",
-      "ვაკე",
-      "სოლოლაკი",
-      "სანზონა",
-      "ჩუღურეთი",
-      "საბურთალო",
-      "დიდიდიღომი",
-    ],
+    Tblisi: ["ვერა", "მთაწმინდა", "ვაკე", "სოლოლაკი", "სანზონა", "ჩუღურეთი", "საბურთალო", "დიდიდიღომი"],
     Batumi: ["ძველი ბულვარი", "ახალი ბულვარი", "გონიო", "ქობულეთი", "ჩაქვი"],
   },
 };
 
-// Handle "find_dream_property" callback
 bot.action("find_dream_property", (ctx) => {
   const lang = ctx.session?.language || "en"; // Default to English if not set
   const messages = MESSAGES[lang]; // Fetch messages for the selected language
@@ -362,28 +360,10 @@ bot.action("find_dream_property", (ctx) => {
     messages.choose_city, // Language-specific message
     Markup.inlineKeyboard(
       Object.keys(DISTRICTS[lang]).map((cityKey) => [
-        Markup.button.callback(
-          messages.cities[Object.keys(DISTRICTS[lang]).indexOf(cityKey)],
-          `city_${cityKey}`
-        ),
+        Markup.button.callback(messages.cities[Object.keys(DISTRICTS[lang]).indexOf(cityKey)], `city_${cityKey}`)
       ])
     )
   );
-});
-
-// Handle All Properties Command
-bot.action("all_properties", async (ctx) => {
-  await ctx.answerCbQuery();
-  try {
-    const properties = await Property.find();
-    console.log("Found properties:", properties.length);
-    await sendFilteredProperties(ctx, properties);
-  } catch (error) {
-    console.error("Error all properties:", error.message);
-    await ctx.reply(
-      "An error occurred while fetching properties. Please try again later."
-    );
-  }
 });
 
 Object.keys(DISTRICTS.en).forEach((cityKey) => {
@@ -399,19 +379,12 @@ Object.keys(DISTRICTS.en).forEach((cityKey) => {
     await ctx.deleteMessage(); // Delete the current message
 
     ctx.reply(
-      `${messages.choose_district} ${
-        messages.cities[Object.keys(DISTRICTS[lang]).indexOf(cityKey)]
-      }.`,
+      `${messages.choose_district} ${messages.cities[Object.keys(DISTRICTS[lang]).indexOf(cityKey)]}.`,
       Markup.inlineKeyboard([
         ...districts.map((district, index) => [
           Markup.button.callback(district, `district_${cityKey}_${index}`),
         ]),
-        [
-          Markup.button.callback(
-            messages.back_to_city || "⬅️ Back",
-            "back_to_city"
-          ),
-        ], // Back button
+        [Markup.button.callback(messages.back_to_city || "⬅️ Back", "back_to_city")], // Back button
       ])
     );
   });
@@ -432,25 +405,13 @@ Object.keys(DISTRICTS.en).forEach((cityKey) => {
       await ctx.deleteMessage(); // Delete the current message
 
       ctx.reply(
-        `${
-          messages.choose_price || "Please choose a price range:"
-        } ${selectedDistrict}.`,
+        `${messages.choose_price || "Please choose a price range:"} ${selectedDistrict}.`,
         Markup.inlineKeyboard([
           [Markup.button.callback("$100 - $500", "price_100_500")],
           [Markup.button.callback("$500 - $1000", "price_500_1000")],
           [Markup.button.callback("$1000 - $2000", "price_1000_2000")],
-          [
-            Markup.button.callback(
-              messages.above_price_2000 || "Above $2000",
-              "price_above_2000"
-            ),
-          ],
-          [
-            Markup.button.callback(
-              messages.back_to_district || "⬅️ Back",
-              `back_to_district_${cityKey}`
-            ),
-          ], // Back to districts
+          [Markup.button.callback(messages.above_price_2000 || "Above $2000", "price_above_2000")],
+          [Markup.button.callback(messages.back_to_district || "⬅️ Back", `back_to_district_${cityKey}`)], // Back to districts
         ])
       );
     });
@@ -467,10 +428,7 @@ bot.action("back_to_city", async (ctx) => {
     messages.choose_city || "Please choose a city:",
     Markup.inlineKeyboard(
       Object.keys(DISTRICTS[lang]).map((cityKey) => [
-        Markup.button.callback(
-          messages.cities[Object.keys(DISTRICTS[lang]).indexOf(cityKey)],
-          `city_${cityKey}`
-        ),
+        Markup.button.callback(messages.cities[Object.keys(DISTRICTS[lang]).indexOf(cityKey)], `city_${cityKey}`),
       ])
     )
   );
@@ -490,12 +448,7 @@ Object.keys(DISTRICTS.en).forEach((cityKey) => {
         ...districts.map((district, index) => [
           Markup.button.callback(district, `district_${cityKey}_${index}`),
         ]),
-        [
-          Markup.button.callback(
-            messages.back_to_city || "⬅️ Back",
-            "back_to_city"
-          ),
-        ], // Back to city
+        [Markup.button.callback(messages.back_to_city || "⬅️ Back", "back_to_city")], // Back to city
       ])
     );
   });
@@ -515,6 +468,7 @@ bot.action("price_500_1000", async (ctx) => {
   await applyFilters(ctx);
 });
 
+
 bot.action("back_to_city", (ctx) => {
   const lang = ctx.session?.language || "en"; // Get current language, default to 'en'
   const messages = MESSAGES[lang]; // Get messages in selected language
@@ -528,14 +482,12 @@ bot.action("back_to_city", (ctx) => {
     messages.choose_city, // Correct language-specific "choose city" message
     Markup.inlineKeyboard(
       Object.keys(DISTRICTS[lang]).map((cityKey) => [
-        Markup.button.callback(
-          messages.cities[Object.keys(DISTRICTS[lang]).indexOf(cityKey)],
-          `city_${cityKey}`
-        ),
+        Markup.button.callback(messages.cities[Object.keys(DISTRICTS[lang]).indexOf(cityKey)], `city_${cityKey}`)
       ])
     )
   );
 });
+
 
 bot.action("back_to_district", (ctx) => {
   initializeUserFilters(ctx); // Ensure userFilters is initialized
@@ -544,15 +496,10 @@ bot.action("back_to_district", (ctx) => {
 
   const city = userFilters[ctx.from.id].city; // Use the previously selected city
   ctx.answerCbQuery();
-  ctx.reply(
-    "Please choose a district:",
-    Markup.inlineKeyboard([
-      ...DISTRICTS[city].map((district) => [
-        Markup.button.callback(district, `district_${district}`),
-      ]),
-      [Markup.button.callback("⬅️ Back", "back_to_city")],
-    ])
-  );
+  ctx.reply("Please choose a district:", Markup.inlineKeyboard([
+    ...DISTRICTS[city].map(district => [Markup.button.callback(district, `district_${district}`)]),
+    [Markup.button.callback("⬅️ Back", "back_to_city")],
+  ]));
 });
 
 // Handle Price Selection
@@ -579,5 +526,7 @@ bot.launch().then(() => console.log("Telegram Bot is running"));
 // Graceful Shutdown
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
+
+
 
 module.exports = { Property };
