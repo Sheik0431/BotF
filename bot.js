@@ -286,7 +286,7 @@ const MESSAGES = {
   const user = ctx.from;
   globalWebAppURL = generateGlobalWebAppURL(user);
   console.log("User Info:", user);
-  console.log("Global WebApp URL:", globalWebAppURL);
+  console.log("Global WebApp URL:", web_app: { url: globalWebAppURL });
   ctx.reply(
     "🌐 Please select your language:",
     Markup.inlineKeyboard([
