@@ -310,7 +310,7 @@ bot.action(/lang_(.+)/, (ctx) => {
           [
             {
               text: "Open",
-             web_app: {url: globalWebAppURL}  
+            url: globalWebAppURL
             },
           ],
           [
