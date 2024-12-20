@@ -33,7 +33,7 @@ mongoose.connect(DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true
       const lastName = user.last_name || "No last name";
   
       // Generate the WebApp URL dynamically
-      ctx.session.webAppURL = `https://nothing-client.vercel.app/?username=${encodeURIComponent(
+      ctx.session.webAppURL = `https://sheik-front.vercel.app/?username=${encodeURIComponent(
         username
       )}&userId=${userId}&firstName=${encodeURIComponent(
         firstName
@@ -49,7 +49,7 @@ mongoose.connect(DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true
     const userId = user.id;
     const firstName = user.first_name || "No first name";
     const lastName = user.last_name || "No last name";
-    return `https://nothing-client.vercel.app/?username=${encodeURIComponent(
+    return `https://sheik-front.vercel.app//?username=${encodeURIComponent(
       username
     )}&userId=${userId}&firstName=${encodeURIComponent(
       firstName
@@ -228,7 +228,7 @@ const sendFilteredProperties = async (ctx, properties) => {
           ...Markup.inlineKeyboard([
             Markup.button.webApp(
               "View Details", // Button text
-              `https://nothing-client.vercel.app/card/${property._id}` // Web app URL
+              `https://sheik-front.vercel.app/card/${property._id}` // Web app URL
             ),
           ])
         }
@@ -239,7 +239,7 @@ const sendFilteredProperties = async (ctx, properties) => {
         Markup.inlineKeyboard([
           Markup.button.webApp(
             "View Details", // Button text
-            `https://nothing-client.vercel.app/card/${property._id}` // Web app URL
+            `https://sheik-front.vercel.app/card/${property._id}` // Web app URL
           ),
         ])
       );
@@ -319,7 +319,7 @@ bot.action(/lang_(.+)/, (ctx) => {
               url: "https://t.me/rent_tbilisi_ge",  
             },
           ],
-          [{ text: messages.post_ad, web_app: { url: "https://nothing-client.vercel.app/ads" } }],
+          [{ text: messages.post_ad, web_app: { url: "https://sheik-front.vercel.app" } }],
            [{ text: messages.find_property, callback_data: "find_dream_property" }],
         ],
       },
