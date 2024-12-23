@@ -8,6 +8,7 @@ const bot = new Telegraf(TOKEN);
 DATABASE_URL = process.env.DATABASE_URL;
 
 // Connect to MongoDB
+// Connect to MongoDB
 mongoose.connect(DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("Connected to Residency Database"))
   .catch((error) => console.error("Error connecting to MongoDB:", error.message));
@@ -33,7 +34,7 @@ mongoose.connect(DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true
       const lastName = user.last_name || "No last name";
   
       // Generate the WebApp URL dynamically
-      ctx.session.webAppURL = `https://sheik-front.vercel.app/?username=${encodeURIComponent(
+      ctx.session.webAppURL = `https://sheik-front.vercel.app?username=${encodeURIComponent(
         username
       )}&userId=${userId}&firstName=${encodeURIComponent(
         firstName
@@ -49,7 +50,7 @@ mongoose.connect(DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true
     const userId = user.id;
     const firstName = user.first_name || "No first name";
     const lastName = user.last_name || "No last name";
-    return `https://sheik-front.vercel.app//?username=${encodeURIComponent(
+    return `https://sheik-front.vercel.app?username=${encodeURIComponent(
       username
     )}&userId=${userId}&firstName=${encodeURIComponent(
       firstName
@@ -90,65 +91,183 @@ const userStates = {}; // Tracks the current step for each user
 const reverseMapping = {
   en: {
     cities: {
-      "Tblisi": "Tblisi",
+      "Tbilisi": "Tbilisi",
       "Batumi": "Batumi",
     },
     districts: {
-      "Vera": "Vera",
-      "Mtatsminda": "Mtatsminda",
-      "Vake": "Vake",
-      "Sololaki": "Sololaki",
-      "Sanzona": "Sanzona",
-      "Chugureti": "Chugureti",
-      "Saburtalo": "Saburtalo",
-      "Dididighomi": "Dididighomi",
-      "Old Boulevard": "Old Boulevard",
-      "New Boulevard": "New Boulevard",
-      "Gonio": "Gonio",
-      "Kobuleti": "Kobuleti",
-      "Chakvi": "Chakvi",
+      "Abanotubani": "Abanotubani",
+  "Afrika": "Afrika",
+  "Avchala": "Avchala",
+  "Avlabari": "Avlabari",
+  "Bagebi": "Bagebi",
+  "Chugureti": "Chugureti",
+  "DidiDighomi": "DidiDighomi",
+  "Didgori": "Didgori",
+  "Didube": "Didube",
+  "Didube-Chughureti": "Didube-Chughureti",
+  "Dighmi 1-9": "Dighmi 1-9",
+  "Dighmis Chala": "Dighmis Chala",
+  "Dighmis Massive": "Dighmis Massive",
+  "Digomi 1-9": "Digomi 1-9",
+  "Digomi Massive": "Digomi Massive",
+  "Elia": "Elia",
+  "Gldani": "Gldani",
+  "Gldani-Nadzaladevi": "Gldani-Nadzaladevi",
+  "Iveri Settlement": "Iveri Settlement",
+  "Isani": "Isani",
+  "Krtsanisi": "Krtsanisi",
+  "Koshigora": "Koshigora",
+  "KusTba": "KusTba",
+  "Lisi": "Lisi",
+  "Lisi Adjacent Area": "Lisi Adjacent Area",
+  "Lisi Lake": "Lisi Lake",
+  "Marjanishvili": "Marjanishvili",
+  "Mtatsminda": "Mtatsminda",
+  "Mukhatgverdi": "Mukhatgverdi",
+  "Mukhattskaro": "Mukhattskaro",
+  "Nutsubidze Plateau": "Nutsubidze Plateau",
+  "Nutsubidze Plato": "Nutsubidze Plato",
+  "Okrokana": "Okrokana",
+  "Old Tbilisi": "Old Tbilisi",
+  "Ortachala": "Ortachala",
+  "Saburtalo": "Saburtalo",
+  "Samgori": "Samgori",
+  "Sof. Digomi": "Sof. Digomi",
+  "Sololaki": "Sololaki",
+  "State University": "State University",
+  "Svaneti Quarter": "Svaneti Quarter",
+  "Tsavkisi Valley": "Tsavkisi Valley",
+  "Temqa": "Temqa",
+  "Tkhinvali": "Tkhinvali",
+  "Tskhneti": "Tskhneti",
+  "Vake": "Vake",
+  "Vake-Saburtalo": "Vake-Saburtalo",
+  "Vasizubani": "Vasizubani",
+  "Varketili": "Varketili",
+  "Vashlijvari": "Vashlijvari",
+  "Vera": "Vera",
+  "Vezisi": "Vezisi",
     },
   },
   ru: {
     cities: {
-      "Тбилиси": "Tblisi",
+      "Тбилиси": "Tbilisi",
       "Батуми": "Batumi",
     },
     districts: {
-      "Вера": "Vera",
-      "Мтацминда": "Mtatsminda",
-      "Ваке": "Vake",
-      "Сололаки": "Sololaki",
-      "Санзона": "Sanzona",
-      "Чугурети": "Chugureti",
-      "Сабуртало": "Saburtalo",
-      "Дидидигохми": "Dididighomi",
-      "Старый Бульвар": "Old Boulevard",
-      "Новый Бульвар": "New Boulevard",
-      "Гонио": "Gonio",
-      "Кобулети": "Kobuleti",
-      "Чакви": "Chakvi",
+     "Абанотубани": "Abanotubani",
+  "Африка": "Afrika",
+  "Авчала": "Avchala",
+  "Авлабари": "Avlabari",
+  "Багеби": "Bagebi",
+  "Чугурети": "Chugureti",
+  "ДидиДигоми": "DidiDighomi",
+  "Дидгори": "Didgori",
+  "Дидубе": "Didube",
+  "Дидубе-Чугурети": "Didube-Chughureti",
+  "Дигми 1-9": "Dighmi 1-9",
+  "Дигмис Чала": "Dighmis Chala",
+  "Дигмис Массив": "Dighmis Massive",
+  "Дигоми 1-9": "Digomi 1-9",
+  "Дигоми Массив": "Digomi Massive",
+  "Элиа": "Elia",
+  "Глдани": "Gldani",
+  "Глдани-Надзаладеви": "Gldani-Nadzaladevi",
+  "Иверийское поселение": "Iveri Settlement",
+  "Исани": "Isani",
+  "Кртсаниси": "Krtsanisi",
+  "Кошигора": "Koshigora",
+  "Кустба": "KusTba",
+  "Лиси": "Lisi",
+  "Лиси Прилегающая Зона": "Lisi Adjacent Area",
+  "Озеро Лиси": "Lisi Lake",
+  "Марджанишвили": "Marjanishvili",
+  "Мтацминда": "Mtatsminda",
+  "Мухатгверди": "Mukhatgverdi",
+  "Мухатцкаро": "Mukhattskaro",
+  "Плато Нутсубидзе": "Nutsubidze Plateau",
+  "Нутсубидзе Плато": "Nutsubidze Plato",
+  "Окрекана": "Okrokana",
+  "Старый Тбилиси": "Old Tbilisi",
+  "Ортачала": "Ortachala",
+  "Сабуртало": "Saburtalo",
+  "Самгори": "Samgori",
+  "Соф. Дигоми": "Sof. Digomi",
+  "Сололаки": "Sololaki",
+  "Государственный Университет": "State University",
+  "Квартал Сванети": "Svaneti Quarter",
+  "Долина Цавкиси": "Tsavkisi Valley",
+  "Темка": "Temqa",
+  "Тхинвали": "Tkhinvali",
+  "Цхнети": "Tskhneti",
+  "Ваке": "Vake",
+  "Ваке-Сабуртало": "Vake-Saburtalo",
+  "Васизубани": "Vasizubani",
+  "Варкетили": "Varketili",
+  "Вашлиджвари": "Vashlijvari",
+  "Вера": "Vera",
+  "Везиси": "Vezisi",
+
     },
   },
   ka: {
     cities: {
-      "თბილისი": "Tblisi",
+      "თბილისი": "Tbilisi",
       "ბათუმი": "Batumi",
     },
     districts: {
-      "ვერა": "Vera",
-      "მთაწმინდა": "Mtatsminda",
-      "ვაკე": "Vake",
-      "სოლოლაკი": "Sololaki",
-      "სანზონა": "Sanzona",
-      "ჩუღურეთი": "Chugureti",
-      "საბურთალო": "Saburtalo",
-      "დიდიდიღომი": "Dididighomi",
-      "ძველი ბულვარი": "Old Boulevard",
-      "ახალი ბულვარი": "New Boulevard",
-      "გონიო": "Gonio",
-      "ქობულეთი": "Kobuleti",
-      "ჩაქვი": "Chakvi",
+     "აბანოთუბანი": "Abanotubani",
+  "აფრიკა": "Afrika",
+  "ავჭალა": "Avchala",
+  "ავლაბარი": "Avlabari",
+  "ბაგები": "Bagebi",
+  "ჩუღურეთი": "Chugureti",
+  "დიდიდიღომი": "DidiDighomi",
+  "დიდგორი": "Didgori",
+  "დიდუბე": "Didube",
+  "დიდუბე-ჩუღურეთი": "Didube-Chughureti",
+  "დიღმის 1-9": "Dighmi 1-9",
+  "დიღმის ჩალა": "Dighmis Chala",
+  "დიღმის მასივი": "Dighmis Massive",
+  "დიღომის 1-9": "Digomi 1-9",
+  "დიღომის მასივი": "Digomi Massive",
+  "ელია": "Elia",
+  "გლდანი": "Gldani",
+  "გლდანი-ნაძალადევი": "Gldani-Nadzaladevi",
+  "ივერის დასახლება": "Iveri Settlement",
+  "ისანი": "Isani",
+  "კრწანისი": "Krtsanisi",
+  "კოშიგორა": "Koshigora",
+  "კუს ტბა": "KusTba",
+  "ლისი": "Lisi",
+  "ლისი მიმდებარე ტერიტორია": "Lisi Adjacent Area",
+  "ლისი ტბა": "Lisi Lake",
+  "მარჯანიშვილი": "Marjanishvili",
+  "მთაწმინდა": "Mtatsminda",
+  "მუხათგვერდი": "Mukhatgverdi",
+  "მუხაწკარო": "Mukhattskaro",
+  "ნუცუბიძის პლატო": "Nutsubidze Plateau",
+  "ნუცუბიძის პლატო": "Nutsubidze Plato",
+  "ოქროყანა": "Okrokana",
+  "ძველი თბილისი": "Old Tbilisi",
+  "ორთაჭალა": "Ortachala",
+  "საბურთალო": "Saburtalo",
+  "სამგორი": "Samgori",
+  "სოფ. დიღომი": "Sof. Digomi",
+  "სოლოლაკი": "Sololaki",
+  "სახელმწიფო უნივერსიტეტი": "State University",
+  "სვანეთის კვარტალი": "Svaneti Quarter",
+  "წაღვის ხეობა": "Tsavkisi Valley",
+  "თემქა": "Temqa",
+  "ტყინვალი": "Tkhinvali",
+  "ცხინეთი": "Tskhneti",
+  "ვაკე": "Vake",
+  "ვაკე-საბურთალო": "Vake-Saburtalo",
+  "ვაზისუბანი": "Vasizubani",
+  "ვარკეთილი": "Varketili",
+  "ვაშლიჯვარი": "Vashlijvari",
+  "ვერა": "Vera",
+  "ვეზისი": "Vezisi",
     },
   },
 };
@@ -228,7 +347,7 @@ const sendFilteredProperties = async (ctx, properties) => {
           ...Markup.inlineKeyboard([
             Markup.button.webApp(
               "View Details", // Button text
-              `https://sheik-front.vercel.app/card/${property._id}` // Web app URL
+              `https://add-bot.vercel.app/card/${property._id}` // Web app URL
             ),
           ])
         }
@@ -239,7 +358,7 @@ const sendFilteredProperties = async (ctx, properties) => {
         Markup.inlineKeyboard([
           Markup.button.webApp(
             "View Details", // Button text
-            `https://sheik-front.vercel.app/card/${property._id}` // Web app URL
+            `https://add-bot.vercel.app/card/${property._id}` // Web app URL
           ),
         ])
       );
@@ -253,7 +372,7 @@ const MESSAGES = {
     description: `No registration or email is required to interact with the app or contact the author of a listing. Simply click "Open Application," specify your search parameters, and choose a suitable option on the map or in the list.`,
     open: "👉 Rent in Tbilisi",
     choose_city: "Let's start filtering. Please choose a city:",
-    cities: ["Tblisi", "Batumi"],
+    cities: ["Tbilisi", "Batumi"],
     choose_district:"Please choose a District in ",
     post_ad: "📝 Post an Ad",
      find_property: "✨ Find Your Dream Property",
@@ -310,7 +429,7 @@ bot.action(/lang_(.+)/, (ctx) => {
           [
             {
               text: "Open",
-          url: globalWebAppURL
+             web_app: {url: globalWebAppURL}  
             },
           ],
           [
@@ -319,7 +438,7 @@ bot.action(/lang_(.+)/, (ctx) => {
               url: "https://t.me/rent_tbilisi_ge",  
             },
           ],
-          [{ text: messages.post_ad, web_app: { url: "https://sheik-front.vercel.app" } }],
+          [{ text: messages.post_ad, web_app: { url: "https://add-bot.vercel.app/ads" } }],
            [{ text: messages.find_property, callback_data: "find_dream_property" }],
         ],
       },
@@ -335,15 +454,15 @@ const initializeUserFilters = (ctx) => {
 
 const DISTRICTS = {
   en: {
-    Tblisi: ["Vera", "Mtatsminda", "Vake", "Sololaki", "Sanzona", "Chugureti", "Saburtalo", "Dididighomi"],
+    Tbilisi: ["Vera", "Mtatsminda", "Vake", "Sololaki", "Sanzona", "Chugureti", "Saburtalo", "Dididighomi"],
     Batumi: ["Old Boulevard", "New Boulevard", "Gonio", "Kobuleti", "Chakvi"],
   },
   ru: {
-    Tblisi: ["Вера", "Мтацминда", "Ваке", "Сололаки", "Санзона", "Чугурети", "Сабуртало", "Дидидигохми"],
+    Tbilisi: ["Вера", "Мтацминда", "Ваке", "Сололаки", "Санзона", "Чугурети", "Сабуртало", "Дидидигохми"],
     Batumi: ["Старый Бульвар", "Новый Бульвар", "Гонио", "Кобулети", "Чакви"],
   },
   ka: {
-    Tblisi: ["ვერა", "მთაწმინდა", "ვაკე", "სოლოლაკი", "სანზონა", "ჩუღურეთი", "საბურთალო", "დიდიდიღომი"],
+    Tbilisi: ["ვერა", "მთაწმინდა", "ვაკე", "სოლოლაკი", "სანზონა", "ჩუღურეთი", "საბურთალო", "დიდიდიღომი"],
     Batumi: ["ძველი ბულვარი", "ახალი ბულვარი", "გონიო", "ქობულეთი", "ჩაქვი"],
   },
 };
@@ -406,13 +525,26 @@ Object.keys(DISTRICTS.en).forEach((cityKey) => {
 
       ctx.reply(
         `${messages.choose_price || "Please choose a price range:"} ${selectedDistrict}.`,
-        Markup.inlineKeyboard([
-          [Markup.button.callback("$100 - $500", "price_100_500")],
-          [Markup.button.callback("$500 - $1000", "price_500_1000")],
-          [Markup.button.callback("$1000 - $2000", "price_1000_2000")],
-          [Markup.button.callback(messages.above_price_2000 || "Above $2000", "price_above_2000")],
-          [Markup.button.callback(messages.back_to_district || "⬅️ Back", `back_to_district_${cityKey}`)], // Back to districts
-        ])
+        Markup.inlineKeyboard(
+          [
+            [Markup.button.callback("$0 - $300", "price_0_300")],
+            [Markup.button.callback("$300 - $500", "price_300_500")],
+            [Markup.button.callback("$500 - $700", "price_500_700")],
+            [Markup.button.callback("$700 - $900", "price_700_900")],
+            [Markup.button.callback("$900 - $1200", "price_900_1200")],
+            [Markup.button.callback("$1200 - $1500", "price_1200_1500")],
+            [Markup.button.callback("$1500 - $1700", "price_1500_1700")],
+            [Markup.button.callback("$1700 - $1900", "price_1700_1900")],
+            [Markup.button.callback("$1900 - $2100", "price_1900_2100")],
+            [Markup.button.callback("$2100 - $2500", "price_2100_2500")],
+            [Markup.button.callback("$2500 - $3000", "price_2500_3000")],
+            [Markup.button.callback("$3000 - $4000", "price_3000_4000")],
+            [Markup.button.callback("$4000 - $5000", "price_4000_5000")],
+            [Markup.button.callback(messages.above_price_5000 || "Above $5000", "price_above_5000")]
+          ]
+          
+      
+      )
       );
     });
   });
@@ -454,19 +586,99 @@ Object.keys(DISTRICTS.en).forEach((cityKey) => {
   });
 });
 
-bot.action("price_100_500", async (ctx) => {
-  userFilters[ctx.from.id].minPrice = 100;
+bot.action("price_0_300", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 0;
+  userFilters[ctx.from.id].maxPrice = 300;
+  userStates[ctx.from.id] = "done"; // Filtering complete
+  await applyFilters(ctx);
+});
+
+bot.action("price_300_500", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 300;
   userFilters[ctx.from.id].maxPrice = 500;
   userStates[ctx.from.id] = "done"; // Filtering complete
   await applyFilters(ctx);
 });
 
-bot.action("price_500_1000", async (ctx) => {
+bot.action("price_500_700", async (ctx) => {
   userFilters[ctx.from.id].minPrice = 500;
-  userFilters[ctx.from.id].maxPrice = 1000;
+  userFilters[ctx.from.id].maxPrice = 700;
   userStates[ctx.from.id] = "done"; // Filtering complete
   await applyFilters(ctx);
 });
+
+bot.action("price_700_900", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 700;
+  userFilters[ctx.from.id].maxPrice = 900;
+  userStates[ctx.from.id] = "done"; // Filtering complete
+  await applyFilters(ctx);
+});
+
+bot.action("price_900_1200", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 900;
+  userFilters[ctx.from.id].maxPrice = 1200;
+  userStates[ctx.from.id] = "done"; // Filtering complete
+  await applyFilters(ctx);
+});
+
+bot.action("price_1200_1500", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 1200;
+  userFilters[ctx.from.id].maxPrice = 1500;
+  userStates[ctx.from.id] = "done"; // Filtering complete
+  await applyFilters(ctx);
+});
+
+bot.action("price_1500_1700", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 1500;
+  userFilters[ctx.from.id].maxPrice = 1700;
+  userStates[ctx.from.id] = "done"; // Filtering complete
+  await applyFilters(ctx);
+});
+
+bot.action("price_1700_1900", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 1700;
+  userFilters[ctx.from.id].maxPrice = 1900;
+  userStates[ctx.from.id] = "done"; // Filtering complete
+  await applyFilters(ctx);
+});
+
+bot.action("price_1900_2100", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 1900;
+  userFilters[ctx.from.id].maxPrice = 2100;
+  userStates[ctx.from.id] = "done"; // Filtering complete
+  await applyFilters(ctx);
+});
+
+bot.action("price_2100_2500", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 2100;
+  userFilters[ctx.from.id].maxPrice = 2500;
+  userStates[ctx.from.id] = "done"; // Filtering complete
+  await applyFilters(ctx);
+});
+
+bot.action("price_2500_3000", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 2500;
+  userFilters[ctx.from.id].maxPrice = 3000;
+  userStates[ctx.from.id] = "done"; // Filtering complete
+  await applyFilters(ctx);
+});
+
+bot.action("price_3000_4000", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 3000;
+  userFilters[ctx.from.id].maxPrice = 4000;
+  userStates[ctx.from.id] = "done"; // Filtering complete
+  await applyFilters(ctx);
+});
+
+bot.action("price_4000_5000", async (ctx) => {
+  userFilters[ctx.from.id].minPrice = 4000;
+  userFilters[ctx.from.id].maxPrice = 5000;
+  userStates[ctx.from.id] = "done"; // Filtering complete
+  await applyFilters(ctx);
+});
+
+
+ 
 
 
 bot.action("back_to_city", (ctx) => {
@@ -503,14 +715,7 @@ bot.action("back_to_district", (ctx) => {
 });
 
 // Handle Price Selection
-bot.action("price_100_500", async (ctx) => {
-  initializeUserFilters(ctx); // Ensure userFilters is initialized
-  userFilters[ctx.from.id].minPrice = 100;
-  userFilters[ctx.from.id].maxPrice = 500;
-  userStates[ctx.from.id] = "done"; // Filtering complete
-
-  await applyFilters(ctx);
-});
+ 
 
 // Apply Filters
 const applyFilters = async (ctx) => {
