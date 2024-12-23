@@ -438,7 +438,7 @@ bot.action(/lang_(.+)/, (ctx) => {
               url: "https://t.me/rent_tbilisi_ge",  
             },
           ],
-          [{ text: messages.post_ad, web_app: { url: "https://add-bot.vercel.app/ads" } }],
+          [{ text: messages.post_ad, web_app: { url: "https://add-bot.vercel.app" } }],
            [{ text: messages.find_property, callback_data: "find_dream_property" }],
         ],
       },
